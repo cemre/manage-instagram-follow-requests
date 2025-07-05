@@ -43,7 +43,8 @@
 }
 
 #loadFollowersButton,
-#loadFollowingButton {
+#loadFollowingButton,
+#loadFollowRequestsButton {
   width: 100%;
   padding: 10px;
   border: none;
@@ -55,7 +56,8 @@
 }
 
 #loadFollowersButton:hover,
-#loadFollowingButton:hover {
+#loadFollowingButton:hover,
+#loadFollowRequestsButton:hover {
   background-color: rgb(79 70 229);
 }
 
@@ -204,45 +206,59 @@
   width: 100%;
 }
 
-.advanced-toggle {
-  display: none;
-  align-items: center;
-  gap: 8px;
-  margin-top: 10px;
-  font-size: 0.9em;
-  color: #aaa;
-  width: 100%;
-  justify-content: flex-start;
-  position: relative;
-}
-
-#advancedModeToggle {
-  transform: scale(1.2);
-  cursor: pointer;
-}
-
-.danger-indicator {
-  display: none;
-  color: #f87171;
-  font-size: 1.2em;
-  margin-left: auto;
-}
-
-.advanced-mode-active .danger-indicator {
-  display: inline-block;
-  animation: blink 1.2s infinite;
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
-
 .action-buttons {
   display: flex;
   gap: 10px;
   width: 100%;
   margin-top: 10px;
+}
+
+
+
+.action-buttons-container {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.accept-button {
+  background-color: #10b981;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 0.8em;
+  font-weight: bold;
+}
+
+.accept-button:hover {
+  background-color: #059669;
+}
+
+.accept-button:disabled {
+  background-color: #6b6b6b;
+  cursor: not-allowed;
+}
+
+.reject-button {
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 0.8em;
+  font-weight: bold;
+}
+
+.reject-button:hover {
+  background-color: #dc2626;
+}
+
+.reject-button:disabled {
+  background-color: #6b6b6b;
+  cursor: not-allowed;
 }
 
 .filter-buttons {
@@ -257,4 +273,17 @@
 
 .user .username:hover {
   text-decoration: underline;
+}
+
+.relationship-info {
+  font-size: 0.8em;
+  color: #888;
+  margin-top: 2px;
+}
+
+.mutual-info {
+  font-size: 0.75em;
+  color: #10b981;
+  margin-top: 2px;
+  font-weight: 500;
 }

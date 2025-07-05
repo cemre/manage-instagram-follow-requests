@@ -19,26 +19,13 @@ const init = () => {
         <input type="text" placeholder="🔍 Search by username or name..." id="searchInput" aria-label="Search users" />
       </div>
 
-      <div class="advanced-toggle" id="advancedToggleGroup">
-        <input type="checkbox" id="advancedModeToggle" />
-        <label for="advancedModeToggle">Advanced Mode (disables safety limits)</label>
-        <span class="danger-indicator" id="dangerIndicator" title="Safety limits disabled">⚠️</span>
-      </div>
-
       <div id="titleAndFilter">
         <h3 id="title"></h3>
-        <div class="filter-buttons">
-          <button id="filterNotFollowingBackButton" class="filter">Not Following You</button>
-          <button id="filterNotFollowedBackButton" class="filter">You’re Not Following</button>
-        </div>
       </div>
 
       <div class="user-list" id="userList"></div>
 
-      <div class="action-buttons">
-        <button id="loadFollowingButton">View Following</button>
-        <button id="loadFollowersButton">View Followers</button>
-      </div>
+
 
       <div class="loader" id="loader"></div>
     </div>

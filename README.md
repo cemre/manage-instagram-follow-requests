@@ -1,29 +1,26 @@
-# Manage Instagram Followers
+# Manage Instagram Follow Requests
 
-**Manage Instagram Followers** is a lightweight Chrome extension that helps you organize your Instagram connections. You can follow back new followers, unfollow users who don’t follow you back, identify mutual followers, and search through your lists with ease.
+**Manage Instagram Follow Requests** is a lightweight Chrome extension that helps you organize your Instagram Follow Requests. It sorts incoming requests by whether you follow them; then sorts the rest by mutual count (unfortunately it's not reliable when there's < 10 mutuals)
 
----
-
-## GitAds Sponsored
-[![Sponsored by GitAds](https://gitads.dev/v1/ad-serve?source=gabireze/manage-instagram-followers@github)](https://gitads.dev/v1/ad-track?source=gabireze/manage-instagram-followers@github)
+It's based on the [Manage Instagram Followers](https://github.com/gabireze/manage-instagram-followers/tree/main) extension, that has MIT license. Please visit their Github page to view their sponsored ad. I've removed functionality they offer (see followers/following, unfollow those who don't follow back) to not compete with that extension. 
 
 ---
 
 ## Features
 
-- **Follow Back** – Easily follow users who recently followed you.
-- **Unfollow Non-Followers** – Remove users who are not following you back.
-- **Mutual Followers** – See users you follow who also follow you.
+- **Sort** – Requests are sorted by a much more sensible way than how Instagram does it
+- **Follow check** – Requesters you follow are prioritized
+- **Approve / Deny** – Easily approve and deny requests
 - **Search** – Find users by name or username using the search bar.
 
 ---
 
 ## Installation
 
-### From the Chrome Web Store
+<!-- ### From the Chrome Web Store
 
 Install directly from the Chrome Web Store:  
-[Manage Instagram Followers - Chrome Web Store](https://chromewebstore.google.com/detail/manage-instagram-followers/laoengmeoeboelooafhjhbfphdfoiegg)
+[Manage Instagram Followers - Chrome Web Store](https://chromewebstore.google.com/detail/manage-instagram-followers/laoengmeoeboelooafhjhbfphdfoiegg) -->
 
 ### Manual Installation (Developer Mode)
 
@@ -38,9 +35,7 @@ Install directly from the Chrome Web Store:
 
 1. Log in to your Instagram account.
 2. Click the extension icon in the Chrome toolbar.
-3. Choose whether to view your followers or the accounts you follow.
-4. Use the search bar and filters to find users.
-5. Click the **Follow**, **Unfollow**, or **Cancel Request** button to manage each user.
+5. Click the **Accept**, **Reject** to manage each user.
 
 ---
 
@@ -48,7 +43,6 @@ Install directly from the Chrome Web Store:
 
 - This extension is designed to simplify follower management but should be used responsibly to avoid violating Instagram’s [Terms of Use](https://help.instagram.com/581066165581870).
 - Instagram enforces rate limits. To prevent temporary blocks on your account, avoid excessive activity.
-- **Advanced Mode** disables internal safety limits. Use this option with caution.
 
 ---
 
@@ -62,4 +56,3 @@ Contributions are welcome. If you have suggestions or improvements, feel free to
 
 This project is licensed under the MIT License. For details, see the [LICENSE](https://opensource.org/licenses/MIT) file.
 
-<!-- GitAds-Verify: DZ1GIX51I6IU89RM199KZPDB8HHT1THS -->

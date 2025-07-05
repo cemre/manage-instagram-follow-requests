@@ -1,6 +1,6 @@
 # Privacy Policy
 
-**Manage Instagram Followers** is a Chrome extension designed to help users manage their Instagram followers more efficiently. We value your privacy and are committed to protecting your personal data.
+**Manage Instagram Follow Requests** is a Chrome extension designed to help users manage their Instagram followers more efficiently. We value your privacy and are committed to protecting your personal data.
 
 ---
 
@@ -57,6 +57,6 @@ We may update this policy from time to time. All changes will be reflected in th
 
 This extension is maintained by:
 
-**Gabriel de Rezende Gonçalves**  
-Website: [https://gabireze.com.br](https://gabireze.com.br)  
-Email: [contato@gabireze.com.br](mailto:contato@gabireze.com.br)
+**Cemre Gungor**  
+Website: [https://cem.re](https://cem.re)  
+Email: [projects@cem.re](mailto:projects@cem.re)

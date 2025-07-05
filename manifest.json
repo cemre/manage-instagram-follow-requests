@@ -1,11 +1,11 @@
 {
-  "name": "Manage Instagram Followers",
-  "description": "Manage your Instagram followers, including features to follow back, unfollow non-followers, and discover mutual followers.",
-  "version": "1.1.0",
+  "name": "Manage Instagram Follow Requests",
+  "description": "Manage your Instagram follow requests.",
+  "version": "1.0.0",
   "author": {
-    "name": "Gabriel de Rezende Gonçalves",
-    "email": "contato@gabireze.com.br",
-    "url": "https://gabireze.com.br/"
+    "name": "Cemre Gungor",
+    "email": "projects@cem.re",
+    "url": "https://cem.re/"
   },
   "permissions": ["scripting"],
   "host_permissions": ["https://*.instagram.com/*"],
@@ -23,7 +23,7 @@
       "48": "icon.png",
       "128": "icon.png"
     },
-    "default_title": "Manage Instagram Followers"
+    "default_title": "Manage Instagram Followe Requests"
   },
   "web_accessible_resources": [
     {

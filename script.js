@@ -1,206 +1,240 @@
-const loadFollowersButton = document.getElementById("loadFollowersButton");
-const loadFollowingButton = document.getElementById("loadFollowingButton");
-const advancedToggleGroup = document.getElementById("advancedToggleGroup");
-const searchGroup = document.getElementById("searchGroup");
-const titleAndFilter = document.getElementById("titleAndFilter");
-let advancedModeEnabled = false;
-const filterNotFollowingBackButton = document.getElementById(
-  "filterNotFollowingBackButton"
-);
-const filterNotFollowedBackButton = document.getElementById(
-  "filterNotFollowedBackButton"
-);
-const overlay = document.getElementById("overlay");
-const infoText = document.getElementById("info-text");
-const title = document.getElementById("title");
+// Global variables
+let endCursor = "";
+const loadedUsers = new Map();
+let filteredUsers = [];
+let caller = null;
+
+let followUnfollowAttempts = {
+  follow: [],
+  unfollow: [],
+  accept: [],
+  reject: [],
+};
+let isInitialized = false; // Flag to prevent multiple initializations
+
+// DOM element references
+let searchGroup;
+let titleAndFilter;
+let overlay;
+let infoText;
+let title;
+
+function initializeElements() {
+  overlay = document.getElementById("overlay");
+  searchGroup = document.getElementById("searchGroup");
+  titleAndFilter = document.getElementById("titleAndFilter");
+  infoText = document.getElementById("info-text");
+  title = document.getElementById("title");
+  
+  // Check if all critical elements exist
+  return !!(overlay && searchGroup && titleAndFilter);
+}
+
+function setupEventListeners() {
+  // Check if listeners are already attached
+  if (document.body.hasAttribute('data-listeners-attached')) {
+    console.log("Event listeners already attached, skipping");
+    return;
+  }
+
+  overlay.addEventListener("click", function (event) {
+    if (event.target === this) {
+      this.style.display = "none";
+    }
+  });
+
+  document.getElementById("searchInput").addEventListener("input", function (e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const usersList = document.getElementById("userList");
+    let usersToSearch = [...loadedUsers.values()];
+    if (!searchTerm) {
+      usersList.innerHTML = "";
+      addUsersToDom(usersToSearch);
+      return;
+    }
+    filteredUsers = usersToSearch.filter(
+      (user) =>
+        user.username.toLowerCase().includes(searchTerm) ||
+        user.full_name.toLowerCase().includes(searchTerm)
+    );
+    usersList.innerHTML = "";
+    addUsersToDom(filteredUsers);
+  });
+
+
+  
+  // Mark that listeners have been attached
+  document.body.setAttribute('data-listeners-attached', 'true');
+  console.log("Event listeners setup complete");
+}
+
+// Initialize when DOM is ready
+function initializeExtension() {
+  // Prevent multiple initializations
+  if (isInitialized) {
+    return;
+  }
+  
+  const elementsReady = initializeElements();
+  
+  // Check if all required elements exist
+  if (!elementsReady) {
+    setTimeout(initializeExtension, 1000);
+    console.log("Elements not ready, retrying in 1000ms...");
+    return;
+  }
+  
+  setupEventListeners();
+  isInitialized = true;
+  
+  // Automatically load follow requests when extension starts
+  if (viewerId) {
+    resetUI();
+    fetchFollowRequests();
+  } else {
+    document.getElementById("info-text").textContent =
+      "You must be logged in to manage your Instagram followers.";
+  }
+}
+
+// Wait for HTML to be injected, then initialize
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeExtension);
+} else {
+  // If DOM is already loaded, wait a bit for HTML injection
+  setTimeout(initializeExtension, 1000);
+}
 
 function resetUI() {
   loadedUsers.clear();
-  currentFilter = null;
-  title.textContent = caller === "Followers" ? "Followers" : "Following";
+
+  title.textContent = "Follow Requests";
   title.style.display = "flex";
   document
     .querySelectorAll(".filter")
     .forEach((element) => element.classList.remove("filter-active"));
   infoText.style.display = "none";
-  advancedToggleGroup.style.display = "flex";
   searchGroup.style.display = "flex";
   titleAndFilter.style.display = "flex";
 }
 
-function toggleFilterButtons({
-  followingBackDisplay = "none",
-  followedBackDisplay = "flex",
-  followedBackText = "",
-}) {
-  filterNotFollowingBackButton.style.display = followingBackDisplay;
-  filterNotFollowedBackButton.style.display = followedBackDisplay;
-  if (followedBackText) {
-    filterNotFollowedBackButton.textContent = followedBackText;
-  }
-}
-
-document
-  .getElementById("advancedModeToggle")
-  .addEventListener("change", function (e) {
-    advancedModeEnabled = e.target.checked;
-    console.log("Advanced Mode:", advancedModeEnabled);
-  });
-
-loadFollowersButton.addEventListener("click", () => {
-  if (!viewerId) {
-    document.getElementById("info-text").textContent =
-      "You must be logged in to manage your Instagram followers.";
-    loadFollowingButton.remove();
-    loadFollowersButton.remove();
-    return;
-  }
-  resetUI();
-  fetchFollowers();
-  toggleFilterButtons({ followedBackText: "Filter Not Followed Back" });
-});
-
-loadFollowingButton.addEventListener("click", () => {
-  if (!viewerId) {
-    document.getElementById("info-text").textContent =
-      "You must be logged in to manage your Instagram followers.";
-    loadFollowingButton.remove();
-    loadFollowersButton.remove();
-    return;
-  }
-  resetUI();
-  fetchFollowing();
-  toggleFilterButtons({
-    followingBackDisplay: "flex",
-    followedBackDisplay: "none",
-    followedBackText: "Filter Non-Followers",
-  });
-});
-
-overlay.addEventListener("click", function (event) {
-  if (event.target === this) {
-    this.style.display = "none";
-  }
-});
-
-let endCursor = "";
-const loadedUsers = new Map();
-let filteredUsers = [];
-let caller = null;
-let currentFilteredUsers = null;
-let currentFilter = null;
-let followUnfollowAttempts = {
-  follow: [],
-  unfollow: [],
-};
-
-document.getElementById("searchInput").addEventListener("input", function (e) {
-  const searchTerm = e.target.value.toLowerCase();
-  const usersList = document.getElementById("userList");
-  let usersToSearch = currentFilteredUsers || [...loadedUsers.values()];
-  if (!searchTerm) {
-    usersList.innerHTML = "";
-    addUsersToDom(usersToSearch);
-    return;
-  }
-  filteredUsers = usersToSearch.filter(
-    (user) =>
-      user.username.toLowerCase().includes(searchTerm) ||
-      user.full_name.toLowerCase().includes(searchTerm)
-  );
-  usersList.innerHTML = "";
-  addUsersToDom(filteredUsers);
-});
-
-const fetchFollowing = async () => {
+const fetchFollowRequests = async () => {
+  
   const loader = document.getElementById("loader");
   loader.style.display = "block";
-  const loadFollowingButton = document.getElementById("loadFollowingButton");
-  document.querySelectorAll(".my-component button").forEach((element) => {
-    element.disabled = true;
-    element.style.cursor = "not-allowed";
-  });
+  
   try {
-    const variables = {
-      id: viewerId,
-      include_reel: false,
-      fetch_mutual: false,
-      first: 50,
-      after: endCursor,
-    };
-    const response = await fetch(
-      `https://www.instagram.com/graphql/query/?query_hash=3dec7e2c57367ef3da3d987d89f9dbc8&variables=${encodeURIComponent(
-        JSON.stringify(variables)
-      )}`
-    );
-    if (!response.ok) {
-      throw new Error(`HTTP Error: ${response.status}`);
-    }
-    const data = await response.json();
-    if (data.data.user.edge_follow.edges.length === 0) {
-      alert("You don't follow anyone or it was not possible to load the data.");
-      return;
-    }
-    endCursor = data.data.user.edge_follow.page_info.end_cursor;
-    const hasNextPage = data.data.user.edge_follow.page_info.has_next_page;
-    updateUIWithData(data.data.user.edge_follow.edges, "Following");
-    if (hasNextPage) {
-      fetchFollowing();
-    }
-  } catch (error) {
-    console.error("Error when fetching data from Instagram:", error);
-  } finally {
-    loader.style.display = "none";
-    document.querySelectorAll(".my-component button").forEach((element) => {
-      element.disabled = false;
-      element.style.cursor = "pointer";
-    });
-  }
-};
+    // Step 1: Gather all pending users with pagination
+    const allUsers = [];
+    let max_id = '';
+    let pageCount = 0;
+    
+    do {
+      pageCount++;
+      console.log(`Fetching page ${pageCount} of follow requests...`);
+      
+      const url = max_id ? 
+        `https://i.instagram.com/api/v1/friendships/pending/?max_id=${max_id}` :
+        `https://i.instagram.com/api/v1/friendships/pending/`;
+        
+      const response = await fetch(url, {
+        method: "GET",
+        headers: headers,
+        credentials: "include",
+        mode: "cors",
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP Error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log(`Page ${pageCount} returned ${data.users?.length || 0} users`);
+      
+      if (!data.users || data.users.length === 0) {
+        console.log("No more users to fetch");
+        break;
+      }
+      
+      allUsers.push(...data.users);
+      max_id = data.next_max_id || '';
+    } while (max_id);
 
-const fetchFollowers = async () => {
-  const loader = document.getElementById("loader");
-  loader.style.display = "block";
-  const loadFollowersButton = document.getElementById("loadFollowersButton");
-  loadFollowersButton.disabled = true;
-  loadFollowersButton.style.cursor = "not-allowed";
-  try {
-    const variables = {
-      id: viewerId,
-      include_reel: false,
-      fetch_mutual: false,
-      first: 50,
-      after: endCursor,
-    };
-    const response = await fetch(
-      `https://www.instagram.com/graphql/query/?query_hash=c76146de99bb02f6415203be841dd25a&variables=${encodeURIComponent(
-        JSON.stringify(variables)
-      )}`
-    );
-    if (!response.ok) {
-      throw new Error(`HTTP Error: ${response.status}`);
-    }
-    const data = await response.json();
-    if (data.data.user.edge_followed_by.edges.length === 0) {
-      alert(
-        "You don't have any followers or it was not possible to load the data."
-      );
+    console.log(`Total users fetched: ${allUsers.length}`);
+
+    if (allUsers.length === 0) {
+      alert("You don't have any pending follow requests.");
       return;
     }
-    endCursor = data.data.user.edge_followed_by.page_info.end_cursor;
-    const hasNextPage = data.data.user.edge_followed_by.page_info.has_next_page;
-    updateUIWithData(data.data.user.edge_followed_by.edges, "Followers");
-    if (hasNextPage) {
-      fetchFollowers();
+
+    // Step 2: Bulk check follow status (if viewer follows each requestee)
+    const followStatuses = {};
+    const chunkSize = 100;
+    
+    for (let i = 0; i < allUsers.length; i += chunkSize) {
+      const chunk = allUsers.slice(i, i + chunkSize);
+      const userIds = chunk.map(user => user.pk).join(',');
+      
+      const statusResponse = await fetch('https://i.instagram.com/api/v1/friendships/show_many/', {
+        method: 'POST',
+        headers: {
+          ...headers,
+          'content-type': 'application/x-www-form-urlencoded'
+        },
+        credentials: "include",
+        mode: "cors",
+        body: `user_ids=${userIds}`
+      });
+      
+      if (statusResponse.ok) {
+        const statusData = await statusResponse.json();
+        Object.assign(followStatuses, statusData.friendship_statuses);
+      }
     }
+
+
+    // Step 3: Helper function to extract mutual count from social_context
+    const getMutualCount = (socialContext) => {
+      if (!socialContext) return 0;
+      const plusMatch = socialContext.match(/\+\s*(\d+)\s+more/);
+      const namedCount = (socialContext.match(/, /g) || []).length + 1;
+      return plusMatch ? namedCount + parseInt(plusMatch[1]) : namedCount;
+    };
+
+    // Step 4: Transform the data with proper relationship info
+    const transformedUsers = allUsers.map(user => ({
+      node: {
+        id: user.pk,
+        username: user.username,
+        full_name: user.full_name,
+        profile_pic_url: user.profile_pic_url,
+        followed_by_viewer: followStatuses[user.pk]?.following || false, // Does viewer follow them?
+        follows_viewer: false, // They requested to follow you, so they don't follow you yet
+        requested_by_viewer: false, // This is a request TO you, not FROM you
+        is_pending_request: true, // Flag to identify this is a follow request
+        mutual_count: getMutualCount(user.social_context), // Number of mutual followers
+        social_context: user.social_context // Original social context string
+      }
+    }))
+    .sort((a, b) => {
+      // First priority: users you follow come first
+      const aFollowed = a.node.followed_by_viewer;
+      const bFollowed = b.node.followed_by_viewer;
+      
+      if (aFollowed !== bFollowed) {
+        return bFollowed - aFollowed; // true (1) comes before false (0)
+      }
+      
+      // Second priority: within each group, sort by mutual count descending
+      return b.node.mutual_count - a.node.mutual_count;
+    });
+    
+    updateUIWithData(transformedUsers, "Follow Requests");
   } catch (error) {
-    console.error("Error when fetching data from Instagram:", error);
+    console.error("Error when fetching follow requests from Instagram:", error);
+    alert("Error loading follow requests. Please try again later.");
   } finally {
     loader.style.display = "none";
-    document.querySelectorAll(".my-component button").forEach((element) => {
-      element.disabled = false;
-      element.style.cursor = "pointer";
-    });
   }
 };
 
@@ -209,25 +243,8 @@ function updateUIWithData(edges, functionCalled) {
   const userList = document.getElementById("userList");
 
   populateLoadedUser(edges, functionCalled);
-  if (currentFilter === "notFollowingBack" && functionCalled === "Following") {
-    currentFilteredUsers = [...loadedUsers.values()].filter(
-      (user) => !user.follows_viewer && user.followed_by_viewer
-    );
-    userList.innerHTML = "";
-    addUsersToDom(currentFilteredUsers);
-  } else if (
-    currentFilter === "notFollowedBack" &&
-    functionCalled === "Followers"
-  ) {
-    currentFilteredUsers = [...loadedUsers.values()].filter(
-      (user) => !user.followed_by_viewer
-    );
-    userList.innerHTML = "";
-    addUsersToDom(currentFilteredUsers);
-  } else {
-    userList.innerHTML = "";
-    addUsersToDom([...loadedUsers.values()]);
-  }
+  userList.innerHTML = "";
+  addUsersToDom([...loadedUsers.values()]);
 }
 
 function populateLoadedUser(users, functionCalled) {
@@ -246,56 +263,34 @@ function addUsersToDom(users) {
   const usersList = document.getElementById("userList");
   usersList.innerHTML = "";
   usersList.style.display = "flex";
-  title.textContent = caller === "Followers" ? "Followers" : "Following";
+  title.textContent = "Follow Requests";
 
   const relationshipConfig = {
-    Following: {
+    "Follow Requests": {
       true: {
-        true: { info: "Mutual", label: "Unfollow", action: "unfollow" },
+        true: { info: "You Follow Them", label: "Accept", action: "accept" },
         false: {
-          info: "Not Following You Back",
-          label: "Unfollow",
-          action: "unfollow",
+          info: "You Follow Them",
+          label: "Accept",
+          action: "accept",
         },
+        undefined: { info: "You Follow Them", label: "Accept", action: "accept" },
       },
       false: {
         true: {
-          info: "You Don't Follow Back",
-          label: "Follow Back",
-          action: "follow",
+          info: "You Don't Follow Them",
+          label: "Accept",
+          action: "accept",
         },
         false: {
-          info: "You don't follow each other",
-          label: "Follow",
-          action: "follow",
-        },
-      },
-    },
-    Followers: {
-      true: {
-        true: { info: "Mutual", label: "Unfollow", action: "unfollow" },
-        false: {
-          info: "Not Following You Back",
-          label: "Unfollow",
-          action: "unfollow",
-        },
-        undefined: { info: "Mutual", label: "Unfollow", action: "unfollow" },
-      },
-      false: {
-        true: {
-          info: "You Don't Follow Back",
-          label: "Follow Back",
-          action: "follow",
-        },
-        false: {
-          info: "You don't follow each other",
-          label: "Follow",
-          action: "follow",
+          info: "You Don't Follow Them",
+          label: "Accept",
+          action: "accept",
         },
         undefined: {
-          info: "You Don't Follow Back",
-          label: "Follow Back",
-          action: "follow",
+          info: "You Don't Follow Them",
+          label: "Accept",
+          action: "accept",
         },
       },
     },
@@ -311,7 +306,18 @@ function addUsersToDom(users) {
 
     let relationState;
 
-    if (user.requested_by_viewer) {
+    if (user.is_pending_request) {
+      // Special handling for follow requests
+      const mutualInfo = user.mutual_count > 0 ? 
+        `<div class="mutual-info">${user.mutual_count} mutual follower${user.mutual_count > 1 ? 's' : ''}</div>` : '';
+      
+      relationState = {
+        info: user.followed_by_viewer ? "You Follow Them" : "You Don't Follow Them",
+        label: "Accept",
+        action: "accept",
+        mutualInfo: mutualInfo
+      };
+    } else if (user.requested_by_viewer) {
       relationState = {
         info: "Follow Request Sent",
         label: "Cancel Request",
@@ -319,13 +325,14 @@ function addUsersToDom(users) {
       };
     } else {
       relationState =
-        relationshipConfig[caller][!!user.followed_by_viewer][
+        relationshipConfig["Follow Requests"][!!user.followed_by_viewer][
           user.follows_viewer
         ];
     }
     const relationshipInfo = `<div class='relationship-info'>${relationState.info}</div>`;
     const buttonLabel = relationState.label;
     const buttonAction = relationState.action;
+    const mutualInfo = relationState.mutualInfo || '';
 
     userDiv.innerHTML = `
       <a href="https://www.instagram.com/${user.username}/" target="_blank">
@@ -335,9 +342,17 @@ function addUsersToDom(users) {
         <a href="https://www.instagram.com/${user.username}/" target="_blank" class="username">@${user.username}</a>
         <div class="full-name">${user.full_name}</div>
         ${relationshipInfo}
+        ${mutualInfo}
       </div>
-      <button class="action-button" data-id="${user.id}" data-action="${buttonAction}">${buttonLabel}</button>
+      <div class="action-buttons-container">
+        ${user.is_pending_request ? 
+          `<button class="action-button accept-button" data-id="${user.id}" data-action="accept">Accept</button>
+           <button class="action-button reject-button" data-id="${user.id}" data-action="reject">Reject</button>` :
+          `<button class="action-button" data-id="${user.id}" data-action="${buttonAction}">${buttonLabel}</button>`
+        }
+      </div>
     `;
+    
     usersList.appendChild(userDiv);
   });
 
@@ -345,8 +360,13 @@ function addUsersToDom(users) {
 }
 
 function attachButtonListeners() {
-  document.querySelectorAll(".action-button").forEach((button) => {
+  const buttons = document.querySelectorAll(".action-button");
+  
+  buttons.forEach((button, index) => {
+    // Remove any existing listeners
     button.removeEventListener("click", handleActionButtonClick);
+    
+    // Add new listener
     button.addEventListener("click", handleActionButtonClick);
   });
 }
@@ -387,47 +407,74 @@ if (rolloutHashMatch) {
 }
 
 function isWithinLimit(actionType) {
-  if (advancedModeEnabled) return true;
+  try {
+    const now = Date.now();
+    const oneMinuteAgo = now - 60000;
+    const oneHourAgo = now - 3600000;
 
-  const now = Date.now();
-  const oneMinuteAgo = now - 60000;
-  const oneHourAgo = now - 3600000;
 
-  followUnfollowAttempts[actionType] = followUnfollowAttempts[
-    actionType
-  ].filter((timestamp) => timestamp >= oneHourAgo);
+    followUnfollowAttempts[actionType] = followUnfollowAttempts[
+      actionType
+    ].filter((timestamp) => timestamp >= oneHourAgo);
 
-  const attemptsLastMinute = followUnfollowAttempts[actionType].filter(
-    (timestamp) => timestamp >= oneMinuteAgo
-  ).length;
-  const attemptsLastHour = followUnfollowAttempts[actionType].length;
 
-  if (attemptsLastMinute >= 5) {
-    alert(
-      `You have reached the limit of ${actionType} actions per minute. Please wait.`
-    );
-    return false;
-  } else if (attemptsLastHour >= 60) {
-    alert(
-      `You have reached the limit of ${actionType} actions per hour. Please wait.`
-    );
+    const attemptsLastMinute = followUnfollowAttempts[actionType].filter(
+      (timestamp) => timestamp >= oneMinuteAgo
+    ).length;
+    const attemptsLastHour = followUnfollowAttempts[actionType].length;
+
+
+    if (attemptsLastMinute >= 5) {
+      alert(
+        `You have reached the limit of ${actionType} actions per minute. Please wait.`
+      );
+      return false;
+    } else if (attemptsLastHour >= 60) {
+      alert(
+        `You have reached the limit of ${actionType} actions per hour. Please wait.`
+      );
+      return false;
+    }
+
+    followUnfollowAttempts[actionType].push(now);
+    return true;
+  } catch (error) {
+    console.error("Error in isWithinLimit:", error);
     return false;
   }
-
-  followUnfollowAttempts[actionType].push(now);
-  return true;
 }
 
 const handleActionButtonClick = async (event) => {
+  
   const userId = event.target.getAttribute("data-id");
   const action = event.target.getAttribute("data-action");
-  if (!isWithinLimit(action)) return;
+  
+  
+  if (!userId || !action) {
+    console.error("Missing userId or action:", { userId, action });
+    return;
+  }
+  
+  if (!isWithinLimit(action)) {
+    return;
+  }
 
   if (action === "follow") {
+    console.log("Calling followUser");
     await followUser(userId, event.target);
   } else if (action === "unfollow") {
+    console.log("Calling unfollowUser");
     await unfollowUser(userId, event.target);
+  } else if (action === "accept") {
+    console.log("Calling acceptFollowRequest for user:", userId);
+    await acceptFollowRequest(userId, event.target);
+  } else if (action === "reject") {
+    console.log("Calling rejectFollowRequest for user:", userId);
+    await rejectFollowRequest(userId, event.target);
+  } else {
+    console.error("Unknown action:", action);
   }
+  
 };
 
 function updateRelationshipInfo(userId, newStatus) {
@@ -438,6 +485,11 @@ function updateRelationshipInfo(userId, newStatus) {
   const userActionButton = userDiv.querySelector(".action-button");
   const user = loadedUsers.get(userId);
   if (!user) return;
+
+  if (user.is_pending_request) {
+    // For follow requests, we don't need to update relationship info after accepting
+    return;
+  }
 
   if (user.requested_by_viewer) {
     relationshipInfoDiv.innerHTML = "Follow Request Sent";
@@ -541,38 +593,70 @@ const unfollowUser = async (userId, button) => {
   }
 };
 
-document
-  .getElementById("filterNotFollowingBackButton")
-  .addEventListener("click", function () {
-    const button = this;
-    if (currentFilter === "notFollowingBack") {
-      currentFilter = null;
-      button.textContent = "Non-Followers";
-      button.classList.remove("filter-active");
-      currentFilteredUsers = null;
-      updateUIWithData([...loadedUsers.values()], caller);
+const acceptFollowRequest = async (userId, button) => {
+  button.disabled = true;
+  try {
+    const response = await fetch(
+      `https://i.instagram.com/api/v1/web/friendships/${userId}/approve/`,
+      {
+        method: "POST",
+        headers: headers,
+        credentials: "include",
+        mode: "cors",
+      }
+    );
+    if (response.ok) {
+      console.log("Follow request accepted successfully.");
+      // Remove the user from the list since the request is now accepted
+      loadedUsers.delete(userId);
+      button.closest('.user').remove();
+      
+      // Update the count display
+      const remainingUsers = [...loadedUsers.values()];
+      if (remainingUsers.length === 0) {
+        document.getElementById("userList").innerHTML = "<div>No pending follow requests.</div>";
+      }
     } else {
-      currentFilter = "notFollowingBack";
-      button.textContent = "Remove Filter";
-      button.classList.add("filter-active");
-      updateUIWithData([...loadedUsers.values()], caller);
+      alert("Error accepting follow request. Please try again later.");
     }
-  });
+  } catch (error) {
+    alert("Error accepting follow request. Please try again later.");
+    console.error("Error in the request:", error);
+  } finally {
+    button.disabled = false;
+  }
+};
 
-document
-  .getElementById("filterNotFollowedBackButton")
-  .addEventListener("click", function () {
-    const button = this;
-    if (currentFilter === "notFollowedBack") {
-      currentFilter = null;
-      button.textContent = "Not Followed Back";
-      button.classList.remove("filter-active");
-      currentFilteredUsers = null;
-      updateUIWithData([...loadedUsers.values()], caller);
+const rejectFollowRequest = async (userId, button) => {
+  button.disabled = true;
+  try {
+    const response = await fetch(
+      `https://i.instagram.com/api/v1/web/friendships/${userId}/ignore/`,
+      {
+        method: "POST",
+        headers: headers,
+        credentials: "include",
+        mode: "cors",
+      }
+    );
+    if (response.ok) {
+      console.log("Follow request rejected successfully.");
+      // Remove the user from the list since the request is now rejected
+      loadedUsers.delete(userId);
+      button.closest('.user').remove();
+      
+      // Update the count display
+      const remainingUsers = [...loadedUsers.values()];
+      if (remainingUsers.length === 0) {
+        document.getElementById("userList").innerHTML = "<div>No pending follow requests.</div>";
+      }
     } else {
-      currentFilter = "notFollowedBack";
-      button.textContent = "Remove Filter";
-      button.classList.add("filter-active");
-      updateUIWithData([...loadedUsers.values()], caller);
+      alert("Error rejecting follow request. Please try again later.");
     }
-  });
+  } catch (error) {
+    alert("Error rejecting follow request. Please try again later.");
+    console.error("Error in the request:", error);
+  } finally {
+    button.disabled = false;
+  }
+};
