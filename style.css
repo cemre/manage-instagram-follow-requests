@@ -213,8 +213,6 @@
   margin-top: 10px;
 }
 
-
-
 .action-buttons-container {
   display: flex;
   gap: 5px;
@@ -282,8 +280,118 @@
 }
 
 .mutual-info {
-  font-size: 0.75em;
-  color: #10b981;
+  color: #888;
+  font-size: 0.9em;
   margin-top: 2px;
-  font-weight: 500;
+}
+
+/* Profile banner styles */
+#ig-follow-request-banner {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 40px;
+}
+
+.ig-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ig-banner-user-pic {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+.ig-banner-user-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.ig-banner-username {
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.ig-banner-fullname {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.ig-banner-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.ig-banner-accept-btn {
+  background: #00c851;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.ig-banner-accept-btn:hover:not(:disabled) {
+  background: #00a844;
+}
+
+.ig-banner-reject-btn {
+  background: #ff4444;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.ig-banner-reject-btn:hover:not(:disabled) {
+  background: #e63939;
+}
+
+.ig-banner-dismiss-btn {
+  background: transparent;
+  color: white;
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.ig-banner-dismiss-btn:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+#ig-follow-request-banner button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ig-banner-status {
+  font-weight: bold;
+  font-size: 15px;
+  margin-left: 16px;
+  padding: 6px 18px;
+  border-radius: 6px;
+  display: inline-block;
+}
+.ig-banner-status.accepted {
+  background: #fff;
+  color: #00c851;
+}
+.ig-banner-status.rejected {
+  background: #fff;
+  color: #ff4444;
 }

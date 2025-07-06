@@ -27,14 +27,15 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["script.js", "html.css"],
+      "resources": ["script.js", "html.css", "style.css"],
       "matches": ["https://*.instagram.com/*"]
     }
   ],
   "content_scripts": [
     {
       "matches": ["https://*.instagram.com/*"],
-      "js": ["script.js"]
+      "js": ["script.js"],
+      "run_at": "document_start"
     }
   ],
   "manifest_version": 3

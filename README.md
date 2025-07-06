@@ -11,7 +11,8 @@ It's based on the [Manage Instagram Followers](https://github.com/gabireze/manag
 - **Sort** – Requests are sorted by a much more sensible way than how Instagram does it
 - **Follow check** – Requesters you follow are prioritized
 - **Approve / Deny** – Easily approve and deny requests
-- **Search** – Find users by name or username using the search bar.
+- **Search** – Find users by name or username using the search bar
+- **Profile Banner** – Automatically shows a banner on profile pages when there's a pending follow request, allowing you to accept or reject without opening the extension
 
 ---
 
@@ -34,8 +35,9 @@ Install directly from the Chrome Web Store:
 ## Usage
 
 1. Log in to your Instagram account.
-2. Click the extension icon in the Chrome toolbar.
-5. Click the **Accept**, **Reject** to manage each user.
+2. **Profile Banner**: When you visit a profile that has a pending follow request, a banner will automatically appear at the top of the page with Accept/Reject buttons.
+3. **Extension UI**: Click the extension icon in the Chrome toolbar to open the full management interface.
+4. Click the **Accept** or **Reject** buttons to manage each user.
 
 ---
 

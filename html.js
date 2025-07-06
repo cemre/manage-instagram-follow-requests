@@ -9,10 +9,10 @@ const init = () => {
   var componentHtml = `
   <div class="overlay" id="overlay">
     <div class="my-component centered-column">
-      <h2>Manage Instagram Followers</h2>
+      <h2>Manage Follow Requests</h2>
 
       <p id="info-text">
-        Easily manage your Instagram connections: follow back, unfollow inactive users, and discover who follows you.
+        Easily manage your follow requests.
       </p>
 
       <div class="input-group" id="searchGroup">
@@ -24,8 +24,6 @@ const init = () => {
       </div>
 
       <div class="user-list" id="userList"></div>
-
-
 
       <div class="loader" id="loader"></div>
     </div>
