@@ -1,6 +1,6 @@
 {
-  "name": "Manage Follow Requests for Instagram",
-  "description": "Shows Accept/Reject buttons on profiles with pending follow requests.",
+  "name": "Manage Follow Requests",
+  "description": "A easier way to get through tons of Instagram follow requests.",
   "version": "1.0.0",
   "author": {
     "name": "Cemre Gungor",
@@ -23,7 +23,7 @@
       "48": "icon.png",
       "128": "icon.png"
     },
-    "default_title": "Manage Follow Requests for Instagram"
+    "default_title": "Manage Follow Requests"
   },
   "web_accessible_resources": [
     {

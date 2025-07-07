@@ -1,8 +1,10 @@
 # Manage Instagram Follow Requests
 
-**Manage Instagram Follow Requests** is a lightweight Chrome extension that helps you organize your Instagram Follow Requests. It shows a banner on profiles that requested to follow you (currently missing from IG web) and auto-navigates you to the next request after you make a decision. 
+**Manage Instagram Follow Requests** is a lightweight Chrome extension that helps you organize your Instagram Follow Requests. It does two things:
+- If you launch the extension, you'll get an overlay view that sorts incoming requests by if you follow the requester; and number of mutuals. (I don't understand why Instagram doesn't already do this). Based on this, you can bulk-select people and Accept or Reject.
+- It also shows a banner on profiles that requested to follow you (missing from Instagram web). After you make a decision, it auto-navigates to the next request.
 
-It's based on the [Manage Instagram Followers](https://github.com/gabireze/manage-instagram-followers/tree/main) extension, that has MIT license. Please visit their Github page to view their sponsored ad. I've removed functionality they offer (see followers/following, unfollow those who don't follow back) to not compete with that extension. 
+It's based on the [Manage Instagram Followers](https://github.com/gabireze/manage-instagram-followers/tree/main) extension, that has MIT license. Please visit their Github page to view their sponsored ad. I've removed functionality that extension offers (i.e. unfollow those who don't follow back), to not compete with it (and also I personally don't find tracking that helpful). 
 
 ---
 

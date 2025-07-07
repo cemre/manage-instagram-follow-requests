@@ -11,16 +11,8 @@ const init = () => {
     <div class="my-component centered-column">
       <h2>Manage Follow Requests</h2>
 
-      <p id="info-text">
-        Easily manage your follow requests.
-      </p>
-
       <div class="input-group" id="searchGroup">
         <input type="text" placeholder="🔍 Search by username or name..." id="searchInput" aria-label="Search users" />
-      </div>
-
-      <div id="titleAndFilter">
-        <h3 id="title"></h3>
       </div>
 
       <div class="user-list" id="userList"></div>

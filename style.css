@@ -22,11 +22,11 @@
   z-index: 1001;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   padding: 20px;
   gap: 15px;
   border-radius: 10px;
-  width: 350px;
+  width: 450px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   background-color: #2a2a2a;
   max-height: 80vh;
@@ -42,28 +42,9 @@
   color: #ccc;
 }
 
-#loadFollowersButton,
-#loadFollowingButton,
-#loadFollowRequestsButton {
-  width: 100%;
-  padding: 10px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-weight: bold;
-  background-color: rgb(99 102 241);
-  color: white;
-}
-
-#loadFollowersButton:hover,
-#loadFollowingButton:hover,
-#loadFollowRequestsButton:hover {
-  background-color: rgb(79 70 229);
-}
-
 .my-component input[type="text"] {
-  width: calc(100% - 14px);
-  padding: 10px;
+  width: 100%;
+  padding: 6px 10px;
   border: none;
   border-radius: 4px;
   color: #efeff1;
@@ -148,9 +129,8 @@
 }
 
 .user-details {
-  flex-grow: 1;
+  flex: 1;
   margin-right: 15px;
-  max-width: 154px;
   text-wrap: pretty;
 }
 
@@ -166,31 +146,6 @@
   display: none;
 }
 
-#filterNotFollowingBackButton,
-#filterNotFollowedBackButton {
-  padding: 10px 15px;
-  color: #ffffff;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.3s ease;
-  display: none;
-  flex-wrap: nowrap;
-}
-
-#filterNotFollowingBackButton:disabled,
-#filterNotFollowedBackButton:disabled {
-  background-color: #6b6b6b;
-}
-
-.filter-active {
-  background-color: rgb(239, 68, 68);
-}
-
-.filter-active:hover {
-  background-color: rgb(220, 38, 38);
-}
 
 .action-button:disabled {
   cursor: not-allowed;
@@ -214,47 +169,94 @@
 }
 
 .action-buttons-container {
-  display: flex;
+  display: none;
   gap: 5px;
   align-items: center;
 }
 
-.accept-button {
-  background-color: #10b981;
-  color: white;
+.user:hover .action-buttons-container {
+  display: flex;
+}
+
+.bulk-action-btn {
+  flex: 1
+}
+
+/* Unified Accept Button Styles */
+.accept-button,
+.ig-banner-accept-btn,
+.bulk-action-btn.accept {
+  background: #00c851;
+  color: #fff;
   border: none;
-  border-radius: 3px;
-  padding: 5px 10px;
-  cursor: pointer;
-  font-size: 0.8em;
+  border-radius: 6px;
   font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
 }
-
-.accept-button:hover {
-  background-color: #059669;
+.accept-button,
+.ig-banner-accept-btn {
+  padding: 5px 10px;
+  font-size: 0.8em;
 }
-
-.accept-button:disabled {
+.ig-banner-accept-btn {
+  padding: 8px 16px;
+  font-weight: 600;
+}
+.bulk-action-btn.accept {
+  font-size: 1.2em;
+  padding: 16px 32px;
+  margin: 12px 16px 0 0;
+  border-radius: 8px;
+}
+.accept-button:hover,
+.ig-banner-accept-btn:hover:not(:disabled),
+.bulk-action-btn.accept:hover:not(:disabled) {
+  background: #059669;
+}
+.accept-button:disabled,
+.ig-banner-accept-btn:disabled,
+.bulk-action-btn.accept:disabled {
   background-color: #6b6b6b;
   cursor: not-allowed;
 }
 
-.reject-button {
-  background-color: #ef4444;
-  color: white;
+/* Unified Reject Button Styles */
+.reject-button,
+.ig-banner-reject-btn,
+.bulk-action-btn.reject {
+  background: #ef4444;
+  color: #fff;
   border: none;
-  border-radius: 3px;
-  padding: 5px 10px;
-  cursor: pointer;
-  font-size: 0.8em;
+  border-radius: 6px;
   font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
 }
 
-.reject-button:hover {
-  background-color: #dc2626;
+.reject-button,
+.ig-banner-reject-btn {
+  padding: 5px 10px;
+  font-size: 0.8em;
 }
-
-.reject-button:disabled {
+.ig-banner-reject-btn {
+  padding: 8px 16px;
+  font-weight: 600;
+}
+.bulk-action-btn.reject {
+  font-size: 1.2em;
+  padding: 16px 32px;
+  margin: 12px 16px 0 0;
+  border-radius: 8px;
+}
+.reject-button:hover,
+.ig-banner-reject-btn:hover:not(:disabled),
+.bulk-action-btn.reject:hover:not(:disabled) {
+  background: #dc2626;
+}
+.reject-button:disabled,
+.ig-banner-reject-btn:disabled,
+.bulk-action-btn.reject:disabled {
   background-color: #6b6b6b;
   cursor: not-allowed;
 }
@@ -281,8 +283,6 @@
 
 .mutual-info {
   color: #888;
-  font-size: 0.9em;
-  margin-top: 2px;
 }
 
 /* Profile banner styles */
@@ -323,69 +323,6 @@
   display: block;
 }
 
-.ig-banner-accept-btn {
-  background: #00c851;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.ig-banner-accept-btn:hover:not(:disabled) {
-  background: #00a844;
-}
-
-.ig-banner-reject-btn {
-  background: #ff4444;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.ig-banner-reject-btn:hover:not(:disabled) {
-  background: #e63939;
-}
-
-.ig-banner-dismiss-btn {
-  background: transparent;
-  color: white;
-  border: 1px solid rgba(255,255,255,0.3);
-  padding: 8px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.ig-banner-dismiss-btn:hover {
-  background: rgba(255,255,255,0.1);
-}
-
-#ig-follow-request-banner button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.ig-banner-status {
-  font-weight: bold;
-  font-size: 15px;
-  margin-left: 16px;
-  padding: 6px 18px;
-  border-radius: 6px;
-  display: inline-block;
-}
-.ig-banner-status.accepted {
-  background: #e6fbe8;
-  color: #00c851;
-}
-.ig-banner-status.rejected {
-  background: #fdd5d5;
-  color: #ff4444;
-}
-
 /* Checkbox styles */
 .ig-banner-checkbox-container {
   display: inline-flex;
@@ -413,4 +350,55 @@
   color: #888;
   font-size: 13px;
   margin-left: 6px;
+}
+
+/* Bulk action buttons for follow requests */
+#bulk-actions-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+#bulk-actions-container.fading-out {
+  opacity: 0.3;
+  pointer-events: none;
+  transition: opacity 0.5s;
+}
+
+input.bulk-user-checkbox {
+  margin-right: 12px;
+  width: 20px;
+  height: 20px;
+}
+
+.select-by-btn {
+  padding: 2px 6px;
+  font-weight: bold;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: inherit;
+  background: #444;
+  color: #ccc;
+}
+
+.select-by-btn:hover {
+  opacity: 0.8;
+}
+
+.select-by-row {
+  font-size: 12px;
+}
+
+.select-by-row:first-child {
+  margin-bottom: 4px;
+}
+
+#select-by-mutuals-input {
+  font-size: inherit;
+  background: #eee;
+  border: none;
+  border-radius: 4px;
+  text-align: center;
 }

@@ -19,14 +19,12 @@ let pendingRequestsCache = {
   cacheDuration: 5 * 60 * 1000 // 5 minutes in milliseconds
 };
 
-
+// Track selected users for bulk actions
+const selectedUserIds = new Set();
 
 // DOM element references
 let searchGroup;
-let titleAndFilter;
 let overlay;
-let infoText;
-let title;
 
 // Cache management functions
 function isCacheValid() {
@@ -166,20 +164,14 @@ const fetchPendingRequests = async (useCache = true) => {
 function initializeElements() {
   overlay = document.getElementById("overlay");
   searchGroup = document.getElementById("searchGroup");
-  titleAndFilter = document.getElementById("titleAndFilter");
-  infoText = document.getElementById("info-text");
-  title = document.getElementById("title");
   
   console.log("Element initialization:", {
     overlay: !!overlay,
     searchGroup: !!searchGroup,
-    titleAndFilter: !!titleAndFilter,
-    infoText: !!infoText,
-    title: !!title
   });
   
   // Check if all critical elements exist
-  const allElementsExist = !!(overlay && searchGroup && titleAndFilter);
+  const allElementsExist = !!(overlay && searchGroup);
   console.log("All critical elements exist:", allElementsExist);
   
   return allElementsExist;
@@ -264,10 +256,7 @@ function initializeExtension() {
     fetchFollowRequests();
   } else {
     console.log("No viewerId, showing login message");
-    const infoText = document.getElementById("info-text");
-    if (infoText) {
-      infoText.textContent = "You must be logged in to manage your Instagram followers.";
-    }
+    alert("You must be logged in to manage your Instagram followers.");
   }
 }
 
@@ -297,14 +286,7 @@ function injectCSSIfNeeded() {
 function resetUI() {
   loadedUsers.clear();
 
-  title.textContent = "Follow Requests";
-  title.style.display = "flex";
-  document
-    .querySelectorAll(".filter")
-    .forEach((element) => element.classList.remove("filter-active"));
-  infoText.style.display = "none";
   searchGroup.style.display = "flex";
-  titleAndFilter.style.display = "flex";
 }
 
 const fetchFollowRequests = async () => {
@@ -353,7 +335,42 @@ function addUsersToDom(users) {
   const usersList = document.getElementById("userList");
   usersList.innerHTML = "";
   usersList.style.display = "flex";
-  title.textContent = "Follow Requests";
+
+  // Insert select-by-mutuals and select-by-following UI rows
+  let selectRowsWrapper = document.getElementById('select-by-rows');
+  if (!selectRowsWrapper) {
+    selectRowsWrapper = document.createElement('div');
+    selectRowsWrapper.id = 'select-by-rows';
+    usersList.parentNode.insertBefore(selectRowsWrapper, usersList);
+  }
+
+  // Remove old rows if present (to avoid duplicates)
+  const oldMutualsRow = document.getElementById('select-by-mutuals-row');
+  if (oldMutualsRow) oldMutualsRow.remove();
+  const oldFollowingRow = document.getElementById('select-by-following-row');
+  if (oldFollowingRow) oldFollowingRow.remove();
+
+  // Create and append select-by-mutuals-row
+  let selectRow = document.createElement('div');
+  selectRow.id = 'select-by-mutuals-row';
+  selectRow.className = 'select-by-row';
+  selectRow.innerHTML = `
+    <button id="select-by-mutuals-btn" class="select-by-btn">Select</button>
+    <span>everyone with more than</span>
+    <input id="select-by-mutuals-input" type="number" min="0" max="999" maxlength="3" value="10">
+    <span>mutuals</span>
+  `;
+  selectRowsWrapper.appendChild(selectRow);
+
+  // Create and append select-by-following-row
+  let selectFollowingRow = document.createElement('div');
+  selectFollowingRow.id = 'select-by-following-row';
+  selectFollowingRow.className = 'select-by-row';
+  selectFollowingRow.innerHTML = `
+    <button id="select-by-following-btn" class="select-by-btn">Select</button>
+    <span>everyone you follow</span>
+  `;
+  selectRowsWrapper.appendChild(selectFollowingRow);
 
   const relationshipConfig = {
     "Follow Requests": {
@@ -399,10 +416,11 @@ function addUsersToDom(users) {
     if (user.is_pending_request) {
       // Special handling for follow requests
       const mutualInfo = user.mutual_count > 0 ? 
-        `<div class="mutual-info">${user.mutual_count} mutual follower${user.mutual_count > 1 ? 's' : ''}</div>` : '';
+        `<div class="mutual-info">${user.mutual_count} mutual${user.mutual_count > 1 ? 's' : ''}</div>` :
+        `<div class="mutual-info">Unknown mutuals</div>`;
       
       relationState = {
-        info: user.followed_by_viewer ? "You Follow Them" : "You Don't Follow Them",
+        info: user.followed_by_viewer ? "You Follow Them" : "",
         label: "Accept",
         action: "accept",
         mutualInfo: mutualInfo
@@ -419,12 +437,15 @@ function addUsersToDom(users) {
           user.follows_viewer
         ];
     }
-    const relationshipInfo = `<div class='relationship-info'>${relationState.info}</div>`;
+    const relationshipInfo = relationState.info
+      ? `<div class='relationship-info'>${relationState.info}</div>`
+      : "";
     const buttonLabel = relationState.label;
     const buttonAction = relationState.action;
     const mutualInfo = relationState.mutualInfo || '';
 
     userDiv.innerHTML = `
+      <input type="checkbox" class="bulk-user-checkbox" value="${user.id}">
       <a href="https://www.instagram.com/${user.username}/" target="_blank">
         <img src="${user.profile_pic_url}" alt="${user.username}" class="user-photo">
       </a>
@@ -442,11 +463,110 @@ function addUsersToDom(users) {
         }
       </div>
     `;
-    
     usersList.appendChild(userDiv);
   });
 
+  // Bulk actions UI
+  let bulkActionsDiv = document.getElementById('bulk-actions-container');
+  if (!bulkActionsDiv) {
+    bulkActionsDiv = document.createElement('div');
+    bulkActionsDiv.id = 'bulk-actions-container';
+    bulkActionsDiv.style.display = 'none';
+    bulkActionsDiv.innerHTML = `
+      <button id="bulk-accept-btn" class="bulk-action-btn accept">Accept (<span id="bulk-accept-count">0</span>)</button>
+      <button id="bulk-reject-btn" class="bulk-action-btn reject">Reject (<span id="bulk-reject-count">0</span>)</button>
+    `;
+    usersList.parentNode.appendChild(bulkActionsDiv);
+  }
+
+  function updateBulkActionsUI() {
+    const count = selectedUserIds.size;
+    document.getElementById('bulk-accept-count').textContent = count;
+    document.getElementById('bulk-reject-count').textContent = count;
+    bulkActionsDiv.style.display = count > 0 ? 'flex' : 'none';
+  }
+
+  usersList.querySelectorAll('.bulk-user-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      if (this.checked) {
+        selectedUserIds.add(this.value);
+      } else {
+        selectedUserIds.delete(this.value);
+      }
+      updateBulkActionsUI();
+    });
+  });
+
+  // Helper for bulk accept/reject actions
+  async function handleBulkAction(actionFn) {
+    const container = document.getElementById('bulk-actions-container');
+    container.classList.add('fading-out');
+    let count = selectedUserIds.size;
+    document.getElementById('bulk-accept-count').textContent = count;
+    document.getElementById('bulk-reject-count').textContent = count;
+    for (const userId of selectedUserIds) {
+      await actionFn(userId);
+      count--;
+      document.getElementById('bulk-accept-count').textContent = count;
+      document.getElementById('bulk-reject-count').textContent = count;
+      await new Promise(res => setTimeout(res, 500));
+    }
+    setTimeout(() => {
+      container.style.display = 'none';
+      container.classList.remove('fading-out');
+    }, 500);
+    selectedUserIds.clear();
+    fetchFollowRequests();
+  }
+
+  document.getElementById('bulk-accept-btn').onclick = () => handleBulkAction(acceptFollowRequest);
+  document.getElementById('bulk-reject-btn').onclick = () => handleBulkAction(rejectFollowRequest);
+
   attachButtonListeners();
+
+  // After rendering users and checkboxes:
+  document.getElementById('select-by-mutuals-btn').onclick = () => {
+    const minMutuals = parseInt(document.getElementById('select-by-mutuals-input').value, 10) || 0;
+    usersList.querySelectorAll('.user').forEach(userDiv => {
+      const userId = userDiv.getAttribute('data-id');
+      const mutualInfoDiv = userDiv.querySelector('.mutual-info');
+      let mutuals = 0;
+      if (mutualInfoDiv) {
+        const match = mutualInfoDiv.textContent.match(/(\d+)/);
+        if (match) mutuals = parseInt(match[1], 10);
+      }
+      const checkbox = userDiv.querySelector('.bulk-user-checkbox');
+      if (checkbox) {
+        if (mutuals > minMutuals) {
+          checkbox.checked = true;
+          selectedUserIds.add(userId);
+        } else {
+          checkbox.checked = false;
+          selectedUserIds.delete(userId);
+        }
+      }
+    });
+    if (typeof updateBulkActionsUI === 'function') updateBulkActionsUI();
+  };
+
+  document.getElementById('select-by-following-btn').onclick = () => {
+    usersList.querySelectorAll('.user').forEach(userDiv => {
+      const userId = userDiv.getAttribute('data-id');
+      const checkbox = userDiv.querySelector('.bulk-user-checkbox');
+      // Find the user object from the loadedUsers map
+      const userObj = loadedUsers.get(userId);
+      if (checkbox && userObj) {
+        if (userObj.followed_by_viewer) {
+          checkbox.checked = true;
+          selectedUserIds.add(userId);
+        } else {
+          checkbox.checked = false;
+          selectedUserIds.delete(userId);
+        }
+      }
+    });
+    if (typeof updateBulkActionsUI === 'function') updateBulkActionsUI();
+  };
 }
 
 function attachButtonListeners() {
