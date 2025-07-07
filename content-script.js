@@ -189,7 +189,6 @@ const fetchPendingRequests = async (useCache = true) => {
         social_context: user.social_context
       }
     }))
-    /*
     .sort((a, b) => {
       const aFollowed = a.node.followed_by_viewer;
       const bFollowed = b.node.followed_by_viewer;
@@ -200,7 +199,6 @@ const fetchPendingRequests = async (useCache = true) => {
       
       return b.node.mutual_count - a.node.mutual_count;
     });
-    */
     
     // Update cache
     updateCache(transformedUsers);
