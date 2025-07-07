@@ -189,6 +189,7 @@ const fetchPendingRequests = async (useCache = true) => {
         social_context: user.social_context
       }
     }))
+    /*
     .sort((a, b) => {
       const aFollowed = a.node.followed_by_viewer;
       const bFollowed = b.node.followed_by_viewer;
@@ -199,6 +200,7 @@ const fetchPendingRequests = async (useCache = true) => {
       
       return b.node.mutual_count - a.node.mutual_count;
     });
+    */
     
     // Update cache
     updateCache(transformedUsers);
@@ -230,7 +232,7 @@ function createProfileBanner() {
   return profileBanner;
 }
 
-function showProfileBanner(username, fullName, profilePicUrl, userId) {
+async function showProfileBanner(username, fullName, profilePicUrl, userId) {
   // Robustly check if the banner is actually in the DOM
   if (profileBanner) {
     if (!profileBanner.parentNode || !document.body.contains(profileBanner)) {
@@ -244,23 +246,29 @@ function showProfileBanner(username, fullName, profilePicUrl, userId) {
   console.log('Creating new banner for:', username);
   const banner = createProfileBanner();
   
+  // Check if there's a next request before showing the checkbox
+  const pendingUsers = await fetchPendingRequests(true);
+  const currentIndex = pendingUsers.findIndex(user => user.node.id === userId);
+  const hasNextRequest = currentIndex !== -1 && currentIndex < pendingUsers.length - 1;
+  
   banner.innerHTML = `
     <div class="ig-banner-content">
       <img src="${profilePicUrl}" alt="${username}" class="ig-banner-user-pic">
       <div class="ig-banner-user-details">
-        <div class="ig-banner-username">@${username}</div>
-        <div class="ig-banner-fullname">${fullName} requested to follow you</div>
+        <div class="ig-banner-username"><b>@${username}</b> requested to follow you <span class="ig-banner-pos">(${currentIndex + 1}/${pendingUsers.length})</span></div>
       </div>
     </div>
     <div class="ig-banner-buttons">
       <button id="accept-request-btn" class="ig-banner-accept-btn">Accept</button>
       <button id="reject-request-btn" class="ig-banner-reject-btn">Reject</button>
-      <div class="ig-banner-checkbox-container">
-        <label class="ig-banner-checkbox-label">
-          <input type="checkbox" id="advance-next-checkbox" class="ig-banner-checkbox" checked>
-          <span class="ig-banner-checkbox-text">Advance to next request</span>
-        </label>
-      </div>
+      ${hasNextRequest ? `
+        <span class="ig-banner-checkbox-container">
+          <label class="ig-banner-checkbox-label">
+            <input type="checkbox" id="advance-next-checkbox" class="ig-banner-checkbox" checked>
+            <span class="ig-banner-checkbox-text">Next</span>
+          </label>
+        </span>
+      ` : ''}
     </div>
   `;
   
@@ -273,6 +281,40 @@ function showProfileBanner(username, fullName, profilePicUrl, userId) {
   const acceptBtn = document.getElementById('accept-request-btn');
   const rejectBtn = document.getElementById('reject-request-btn');
   const buttonsDiv = banner.querySelector('.ig-banner-buttons');
+  const checkbox = document.getElementById('advance-next-checkbox');
+
+  // Only set up checkbox if it exists (i.e., if there's a next request)
+  if (checkbox) {
+    // Load checkbox state from session storage
+    const savedCheckboxState = sessionStorage.getItem('ig-advance-next-checkbox');
+    if (savedCheckboxState !== null) {
+      checkbox.checked = savedCheckboxState === 'true';
+    }
+
+    // Save checkbox state when changed
+    checkbox.addEventListener('change', () => {
+      sessionStorage.setItem('ig-advance-next-checkbox', checkbox.checked.toString());
+    });
+  }
+
+  // Function to navigate to a specific user by ID (new method)
+  async function navigateToNextRequestById(nextUserId) {
+    try {
+      const pendingUsers = await fetchPendingRequests(true);
+      const nextUser = pendingUsers.find(user => user.node.id === nextUserId);
+      
+      if (nextUser) {
+        console.log('Navigating to next request by ID:', nextUser.node.username);
+        
+        // Navigate to the next user's profile
+        window.location.href = `https://www.instagram.com/${nextUser.node.username}/`;
+      } else {
+        console.log('Next user not found in pending requests, navigation cancelled');
+      }
+    } catch (error) {
+      console.error('Error navigating to next request by ID:', error);
+    }
+  }
 
   function showStatus(status) {
     if (buttonsDiv) buttonsDiv.remove();
@@ -282,40 +324,44 @@ function showProfileBanner(username, fullName, profilePicUrl, userId) {
     banner.appendChild(statusDiv);
   }
 
-  acceptBtn.addEventListener('click', async () => {
-    acceptBtn.disabled = true;
-    rejectBtn.disabled = true;
-    try {
-      await acceptFollowRequest(userId, acceptBtn);
-      showStatus('Accepted');
-      clearCache();
-      profileBanner = banner;
-    } catch (error) {
-      console.error('Error accepting request:', error);
-      acceptBtn.disabled = false;
-      rejectBtn.disabled = false;
-    }
-  });
+  // Helper to handle accept/reject actions
+  function handleRequest(actionFn, button, otherButton, statusText) {
+    return async () => {
+      button.disabled = true;
+      otherButton.disabled = true;
+      try {
+        // Determine next user before processing the request
+        let nextUserId = null;
+        if (checkbox && checkbox.checked) {
+          const currentIndex = pendingUsers.findIndex(user => user.node.id === userId);
+          if (currentIndex !== -1 && currentIndex < pendingUsers.length - 1) {
+            nextUserId = pendingUsers[currentIndex + 1].node.id;
+            console.log('Next user ID determined before', statusText.toLowerCase(), ':', nextUserId);
+          }
+        }
 
-  rejectBtn.addEventListener('click', async () => {
-    acceptBtn.disabled = true;
-    rejectBtn.disabled = true;
-    try {
-      await rejectFollowRequest(userId, rejectBtn);
-      showStatus('Rejected');
-      clearCache();
-      profileBanner = banner;
-    } catch (error) {
-      console.error('Error rejecting request:', error);
-      acceptBtn.disabled = false;
-      rejectBtn.disabled = false;
-    }
-  });
+        await actionFn(userId, button);
+        showStatus(statusText);
+        clearCache();
+        profileBanner = banner;
 
-  document.getElementById('dismiss-banner-btn').addEventListener('click', () => {
-    banner.remove();
-    profileBanner = null;
-  });
+        // Navigate to next request if we determined a next user
+        if (nextUserId) {
+          navigateToNextRequestById(nextUserId);
+        }
+      } catch (error) {
+        console.error(`Error ${statusText.toLowerCase()} request:`, error);
+        button.disabled = false;
+        otherButton.disabled = false;
+      }
+    };
+  }
+
+  acceptBtn.addEventListener('click', handleRequest(acceptFollowRequest, acceptBtn, rejectBtn, 'Accepted'));
+  rejectBtn.addEventListener('click', handleRequest(rejectFollowRequest, rejectBtn, acceptBtn, 'Rejected'));
+
+  // Note: No dismiss button in current banner design
+  // Users can dismiss by navigating away or refreshing the page
 }
 
 function hideProfileBanner() {
@@ -357,16 +403,17 @@ async function checkProfileForPendingRequest() {
   console.log('Checking for pending request from:', username);
   
   try {
-    const pendingUsers = await fetchPendingRequests();
+    const pendingUsers = await fetchPendingRequests(true); // Use cache by default
     console.log('Found', pendingUsers.length, 'pending users');
     
-    const pendingUser = pendingUsers.find(user => 
+    const pendingUserIndex = pendingUsers.findIndex(user => 
       user.node.username.toLowerCase() === username.toLowerCase()
     );
     
-    if (pendingUser) {
-      console.log('Found pending request, showing banner');
-      showProfileBanner(
+    if (pendingUserIndex !== -1) {
+      const pendingUser = pendingUsers[pendingUserIndex];
+      console.log(`Found pending request at position ${pendingUserIndex + 1} of ${pendingUsers.length}, showing banner`);
+      await showProfileBanner(
         pendingUser.node.username,
         pendingUser.node.full_name,
         pendingUser.node.profile_pic_url,
@@ -406,7 +453,9 @@ const acceptFollowRequest = async (userId, button) => {
     );
     if (response.ok) {
       console.log("Follow request accepted successfully.");
-      clearCache();
+      
+      // Don't update cache here - let navigateToNextRequest handle it
+      // This ensures the user is still in the cache for navigation
     } else {
       alert("Error accepting follow request. Please try again later.");
     }
@@ -437,7 +486,9 @@ const rejectFollowRequest = async (userId, button) => {
     );
     if (response.ok) {
       console.log("Follow request rejected successfully.");
-      clearCache();
+      
+      // Don't update cache here - let navigateToNextRequest handle it
+      // This ensures the user is still in the cache for navigation
     } else {
       alert("Error rejecting follow request. Please try again later.");
     }
