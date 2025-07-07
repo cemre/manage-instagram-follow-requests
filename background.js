@@ -1,3 +1,4 @@
+/*
 chrome.action.onClicked.addListener(async function () {
   await chrome.tabs.create(
     { url: "https://www.instagram.com/" },
@@ -31,3 +32,5 @@ async function injectScript() {
   };
   (document.head || document.documentElement).appendChild(script);
 }
+
+*/

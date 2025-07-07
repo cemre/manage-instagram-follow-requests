@@ -27,14 +27,14 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["script.js", "html.css", "style.css"],
+      "resources": ["script.js", "content-script.js",  "html.css", "style.css"],
       "matches": ["https://*.instagram.com/*"]
     }
   ],
   "content_scripts": [
     {
       "matches": ["https://*.instagram.com/*"],
-      "js": ["script.js"],
+      "js": ["content-script.js"],
       "run_at": "document_start"
     }
   ],

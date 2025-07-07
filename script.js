@@ -1,4 +1,5 @@
-// Global variables
+/*
+
 let endCursor = "";
 const loadedUsers = new Map();
 let filteredUsers = [];
@@ -19,9 +20,6 @@ let pendingRequestsCache = {
   timestamp: null,
   cacheDuration: 5 * 60 * 1000 // 5 minutes in milliseconds
 };
-
-// Banner element for profile pages
-let profileBanner = null;
 
 
 
@@ -166,179 +164,6 @@ const fetchPendingRequests = async (useCache = true) => {
   }
 };
 
-// Profile banner functionality
-function createProfileBanner() {
-  if (profileBanner) {
-    profileBanner.remove();
-  }
-  
-  profileBanner = document.createElement('div');
-  profileBanner.id = 'ig-follow-request-banner';
-  
-  // Try to find the main element
-  const main = document.querySelector('main>div');
-  
-  if (main) {
-    // Insert as first child of main - styles are now handled by CSS
-    main.insertBefore(profileBanner, main.firstChild);
-  }
-  
-  return profileBanner;
-}
-
-function showProfileBanner(username, fullName, profilePicUrl, userId) {
-  // Robustly check if the banner is actually in the DOM
-  if (profileBanner) {
-    if (!profileBanner.parentNode || !document.body.contains(profileBanner)) {
-      profileBanner = null;
-    } else {
-      console.log('Banner already exists, not creating another one');
-      return;
-    }
-  }
-  
-  console.log('Creating new banner for:', username);
-  const banner = createProfileBanner();
-  
-  banner.innerHTML = `
-    <div class="ig-banner-content">
-      <img src="${profilePicUrl}" alt="${username}" class="ig-banner-user-pic">
-      <div class="ig-banner-user-details">
-        <div class="ig-banner-username">@${username}</div>
-        <div class="ig-banner-fullname">${fullName} requested to follow you</div>
-      </div>
-    </div>
-    <div class="ig-banner-buttons">
-      <button id="accept-request-btn" class="ig-banner-accept-btn">Accept</button>
-      <button id="reject-request-btn" class="ig-banner-reject-btn">Reject</button>
-      <button id="dismiss-banner-btn" class="ig-banner-dismiss-btn">×</button>
-    </div>
-  `;
-  
-  const main = document.querySelector('main>div');
-  if (main) {
-    main.insertBefore(banner, main.firstChild);
-  }
-  profileBanner = banner;
-  
-  const acceptBtn = document.getElementById('accept-request-btn');
-  const rejectBtn = document.getElementById('reject-request-btn');
-  const buttonsDiv = banner.querySelector('.ig-banner-buttons');
-
-  function showStatus(status) {
-    if (buttonsDiv) buttonsDiv.remove();
-    const statusDiv = document.createElement('div');
-    statusDiv.className = 'ig-banner-status ' + (status === 'Accepted' ? 'accepted' : 'rejected');
-    statusDiv.textContent = status;
-    banner.appendChild(statusDiv);
-  }
-
-  acceptBtn.addEventListener('click', async () => {
-    acceptBtn.disabled = true;
-    rejectBtn.disabled = true;
-    try {
-      await acceptFollowRequest(userId, acceptBtn);
-      showStatus('Accepted');
-      clearCache();
-      profileBanner = banner;
-    } catch (error) {
-      console.error('Error accepting request:', error);
-      acceptBtn.disabled = false;
-      rejectBtn.disabled = false;
-    }
-  });
-
-  rejectBtn.addEventListener('click', async () => {
-    acceptBtn.disabled = true;
-    rejectBtn.disabled = true;
-    try {
-      await rejectFollowRequest(userId, rejectBtn);
-      showStatus('Rejected');
-      clearCache();
-      profileBanner = banner;
-    } catch (error) {
-      console.error('Error rejecting request:', error);
-      acceptBtn.disabled = false;
-      rejectBtn.disabled = false;
-    }
-  });
-
-  document.getElementById('dismiss-banner-btn').addEventListener('click', () => {
-    banner.remove();
-    profileBanner = null;
-  });
-}
-
-function hideProfileBanner() {
-  if (profileBanner) {
-    console.log('Hiding profile banner');
-    profileBanner.remove();
-    profileBanner = null;
-  }
-}
-
-function isProfilePage() {
-  const path = window.location.pathname;
-  // Check if we're on a profile page (e.g., /username/)
-  return /^\/[^\/]+\/?$/.test(path) && !path.includes('/p/') && !path.includes('/reel/');
-}
-
-function getCurrentProfileUsername() {
-  const path = window.location.pathname;
-  const match = path.match(/^\/([^\/]+)\/?$/);
-  return match ? match[1] : null;
-}
-
-async function checkProfileForPendingRequest() {
-  
-  console.log('Checking profile for pending request...');
-  
-  if (!isProfilePage()) {
-    console.log('Not a profile page, hiding banner');
-    hideProfileBanner();
-    return;
-  }
-  
-  const username = getCurrentProfileUsername();
-  if (!username) {
-    console.log('No username found, hiding banner');
-    hideProfileBanner();
-    return;
-  }
-  
-  console.log('Checking for pending request from:', username);
-  
-  try {
-    const pendingUsers = await fetchPendingRequests();
-    console.log('Found', pendingUsers.length, 'pending users');
-    
-    const pendingUser = pendingUsers.find(user => 
-      user.node.username.toLowerCase() === username.toLowerCase()
-    );
-    
-    if (pendingUser) {
-      console.log('Found pending request, showing banner');
-      showProfileBanner(
-        pendingUser.node.username,
-        pendingUser.node.full_name,
-        pendingUser.node.profile_pic_url,
-        pendingUser.node.id
-      );
-    } else {
-      // Only hide banner if we don't have a pending request AND we're not on a profile page
-      // This prevents the banner from disappearing when the check runs multiple times
-      if (!isProfilePage()) {
-        console.log('No pending request found and not on profile page, hiding banner');
-        hideProfileBanner();
-      } else {
-        console.log('No pending request found but still on profile page, keeping banner hidden');
-      }
-    }
-  } catch (error) {
-    console.error('Error checking profile for pending request:', error);
-    // Don't hide banner on error, just log it
-  }
-}
 
 function initializeElements() {
   overlay = document.getElementById("overlay");
@@ -347,8 +172,19 @@ function initializeElements() {
   infoText = document.getElementById("info-text");
   title = document.getElementById("title");
   
+  console.log("Element initialization:", {
+    overlay: !!overlay,
+    searchGroup: !!searchGroup,
+    titleAndFilter: !!titleAndFilter,
+    infoText: !!infoText,
+    title: !!title
+  });
+  
   // Check if all critical elements exist
-  return !!(overlay && searchGroup && titleAndFilter);
+  const allElementsExist = !!(overlay && searchGroup && titleAndFilter);
+  console.log("All critical elements exist:", allElementsExist);
+  
+  return allElementsExist;
 }
 
 function setupEventListeners() {
@@ -391,24 +227,32 @@ function setupEventListeners() {
 
 // Initialize when DOM is ready
 function initializeExtension() {
+  
   // Prevent multiple initializations
   if (isInitialized) {
     return;
   }
   
+  // Show the overlay immediately
+  const overlay = document.getElementById("overlay");
+  if (overlay) {
+    overlay.style.display = "flex";
+  }
+  
   // Initialize Instagram API first
   if (!initializeInstagramAPI()) {
-    setTimeout(initializeExtension, 1000);
     console.log("Instagram API not ready, retrying in 1000ms...");
+    setTimeout(initializeExtension, 1000);
     return;
   }
+  
+  console.log("Instagram API initialized, viewerId:", viewerId);
   
   const elementsReady = initializeElements();
   
   // Check if all required elements exist
   if (!elementsReady) {
     setTimeout(initializeExtension, 1000);
-    console.log("Elements not ready, retrying in 1000ms...");
     return;
   }
   
@@ -417,49 +261,15 @@ function initializeExtension() {
   
   // Automatically load follow requests when extension starts
   if (viewerId) {
+    console.log("Loading follow requests...");
     resetUI();
     fetchFollowRequests();
   } else {
-    document.getElementById("info-text").textContent =
-      "You must be logged in to manage your Instagram followers.";
-  }
-  
-
-}
-
-// Make initializeExtension available globally for background script
-window.initializeExtension = initializeExtension;
-
-// Only initialize the full extension when it's actually needed (when extension is clicked)
-// The extension UI will be injected by the background script when the extension icon is clicked
-
-// Check for profile banner on any Instagram page
-function initializeProfileBannerOnly() {
-
-  console.log('initializeProfileBannerOnly called');
-  
-  // Prevent multiple initializations
-  if (isBannerInitialized) {
-    console.log('Banner already initialized, skipping');
-    return;
-  }
-  
-  // Initialize Instagram API
-  if (!initializeInstagramAPI()) {
-    console.log('Instagram API not ready, retrying in 2000ms...');
-    setTimeout(initializeProfileBannerOnly, 2000);
-    return;
-  }
-  
-  console.log('Banner initialization complete');
-  isBannerInitialized = true;
-  
-  // Check for profile banner if we're on a profile page
-  if (isProfilePage()) {
-    console.log('On profile page, checking for pending request');
-    checkProfileForPendingRequest();
-  } else {
-    console.log('Not on profile page');
+    console.log("No viewerId, showing login message");
+    const infoText = document.getElementById("info-text");
+    if (infoText) {
+      infoText.textContent = "You must be logged in to manage your Instagram followers.";
+    }
   }
 }
 
@@ -485,17 +295,6 @@ function injectCSSIfNeeded() {
   }
 }
 
-// Initialize profile banner functionality on all Instagram pages
-function initializeProfileBannerWithCSS() {
-  injectCSSIfNeeded();
-  initializeProfileBannerOnly();
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initializeProfileBannerWithCSS);
-} else {
-  setTimeout(initializeProfileBannerWithCSS, 1000);
-}
 
 function resetUI() {
   loadedUsers.clear();
@@ -1001,23 +800,6 @@ const rejectFollowRequest = async (userId, button) => {
   }
 };
 
-// --- SPA navigation detection for Instagram profile pages (polling method) ---
-let lastProfilePath = null;
+initializeExtension();
 
-setInterval(() => {
-  const currentPath = window.location.pathname;
-  if (isProfilePage() && currentPath !== lastProfilePath) {
-    lastProfilePath = currentPath;
-    setTimeout(() => {
-      checkProfileForPendingRequest();
-    }, 3000); // Wait 3 seconds for DOM to update
-  }
-}, 500); // Check every 500ms
-
-// Also run on initial load
-if (isProfilePage()) {
-  lastProfilePath = window.location.pathname;
-  setTimeout(() => {
-    checkProfileForPendingRequest();
-  }, 3000);
-}
+*/
