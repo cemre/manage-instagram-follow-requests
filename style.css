@@ -192,17 +192,12 @@
   border-radius: 6px;
   font-weight: bold;
   cursor: pointer;
-  transition: background 0.2s;
 }
-.accept-button,
-.ig-banner-accept-btn {
+.accept-button {
   padding: 5px 10px;
   font-size: 0.8em;
 }
-.ig-banner-accept-btn {
-  padding: 8px 16px;
-  font-weight: 600;
-}
+
 .bulk-action-btn.accept {
   font-size: 1.2em;
   padding: 16px 32px;
@@ -231,18 +226,13 @@
   border-radius: 6px;
   font-weight: bold;
   cursor: pointer;
-  transition: background 0.2s;
 }
 
-.reject-button,
-.ig-banner-reject-btn {
+.reject-button {
   padding: 5px 10px;
   font-size: 0.8em;
 }
-.ig-banner-reject-btn {
-  padding: 8px 16px;
-  font-weight: 600;
-}
+
 .bulk-action-btn.reject {
   font-size: 1.2em;
   padding: 16px 32px;
@@ -287,18 +277,26 @@
 
 /* Profile banner styles */
 #ig-follow-request-banner {
-  background: #fff
-  color: #999;
+  background: rgb(var(--ig-primary-background));
+  color:  rgb(var(--ig-primary-text));
   padding: 12px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   font-size: 14px;
-  width: 100%;
+  
   box-sizing: border-box;
-  margin-bottom: 40px;
-  border: 1px solid #999;
-  border-radius: 8px;
+  position: fixed;
+  bottom: 50px;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  height: 100px;
+  border-top: 1px solid rgb(var(--ig-elevated-separator));
+}
+
+/* Hide banner on screens larger than 700px */
+@media (min-width: 701px) {
+  #ig-follow-request-banner {
+    display: none;
+  }
 }
 
 .ig-banner-content {
@@ -314,35 +312,33 @@
   border: 2px solid white;
 }
 
-.ig-banner-user-details {
-  display: flex;
-  flex-direction: column;
-}
-
 .ig-banner-buttons {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
 }
 
-/* Checkbox styles */
-.ig-banner-checkbox-container {
+/* Toggle button styles */
+.ig-banner-toggle-btn {
   display: inline-flex;
   align-items: center;
-  margin-left: 12px;
-}
-
-.ig-banner-checkbox-label {
-  display: flex;
-  align-items: center;
-  font-size: 15px;
-  color: #222;
-  font-weight: 500;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 6px;
   cursor: pointer;
-  user-select: none;
+  background-color: #e5e7eb;
+  color: #6b7280;
+  padding: 0;
+  flex-shrink: 0;
 }
 
-.ig-banner-checkbox {
-  margin-right: 6px;
-  margin-left: 0;
+
+.ig-banner-toggle-btn.enabled {
+  background-color: #3b82f6;
+  color: white;
 }
 
 .ig-banner-pos {
@@ -363,7 +359,6 @@
 #bulk-actions-container.fading-out {
   opacity: 0.3;
   pointer-events: none;
-  transition: opacity 0.5s;
 }
 
 input.bulk-user-checkbox {
@@ -401,4 +396,37 @@ input.bulk-user-checkbox {
   border: none;
   border-radius: 4px;
   text-align: center;
+}
+
+.ig-banner-reject-btn,
+.ig-banner-accept-btn {
+  padding: 16px;
+  font-weight: 600;
+  flex: 1;
+  height: 48px;
+}
+
+.ig-banner-user-details {
+  margin-bottom: 8px;
+}
+
+/* Success and faded states for banner buttons */
+.ig-banner-accept-btn.success,
+.ig-banner-reject-btn.success {
+  background-color: #6b6b6b !important;
+  color: #fff !important;
+  cursor: not-allowed !important;
+}
+
+.ig-banner-accept-btn.faded,
+.ig-banner-reject-btn.faded,
+.ig-banner-toggle-btn.faded {
+  background-color: #6b6b6b !important;
+  color: #999 !important;
+  cursor: not-allowed !important;
+  opacity: 0.5;
+}
+
+main {
+  padding-bottom: 100px;
 }

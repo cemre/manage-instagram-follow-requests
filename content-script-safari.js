@@ -1,4 +1,4 @@
-// Content script for profile banner functionality
+// Content script for profile banner functionality - Safari Version
 // This runs on all Instagram pages automatically
 
 // Global variables for profile banner
@@ -37,27 +37,8 @@ function clearCache() {
   pendingRequestsCache.timestamp = null;
 }
 
-// Function to inject CSS if not already present
-function injectCSSIfNeeded() {
-  // Check if our CSS is already injected
-  if (document.getElementById('ig-follow-request-css')) {
-    return;
-  }
-  
-  try {
-    // Try to use chrome.runtime.getURL first (extension context)
-    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL) {
-      const link = document.createElement('link');
-      link.id = 'ig-follow-request-css';
-      link.rel = 'stylesheet';
-      link.type = 'text/css';
-      link.href = chrome.runtime.getURL('style.css');
-      document.head.appendChild(link);
-    } 
-  } catch (error) {
-    console.error('Error injecting CSS:', error);
-  }
-}
+// Safari handles CSS injection automatically via Info.plist
+// No need for injectCSSIfNeeded function
 
 function initializeInstagramAPI() {
   if (!document.body) return false;
@@ -332,6 +313,7 @@ async function showProfileBanner(username, fullName, profilePicUrl, userId) {
       // Also disable toggle button immediately if it exists
       if (toggleBtn) {
         toggleBtn.disabled = true;
+        toggleBtn.setAttribute('data-enabled', 'false');
         toggleBtn.classList.add('faded');
       }
       try {
@@ -543,7 +525,7 @@ function initializeProfileBannerWithCSS() {
     return;
   }
   
-  injectCSSIfNeeded();
+  // Safari handles CSS injection automatically via Info.plist
   initializeProfileBannerOnly();
 }
 
@@ -560,8 +542,10 @@ let lastProfilePath = null;
 setInterval(() => {
   const currentPath = window.location.pathname;
   if (currentPath !== lastProfilePath) {
+    console.log(`URL changed from ${lastProfilePath} to ${currentPath}`);
     lastProfilePath = currentPath;
     setTimeout(() => {
+      console.log('Running checkProfileForPendingRequest after URL change');
       checkProfileForPendingRequest();
     }, 3000); // Wait 3 seconds for DOM to update
   }
